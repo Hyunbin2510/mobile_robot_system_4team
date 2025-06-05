@@ -10,6 +10,10 @@ from mindsensorsPYB import LSA
 
 import time
 
+'''
+첫 기둥 확인하면 멈추기
+'''
+
 # This program requires LEGO EV3 MicroPython v2.0 or higher.
 # Click "Open user guide" on the EV3 extension tab for more information.
 
@@ -78,68 +82,102 @@ def reset_yellow_flag():
 
 # p_parking
 def p_parking():
-    ULTRA_DISTANCE_THRESHHOLD = 100
-    park_switch = [False, False, False,False, False]
+    ULTRA_DISTANCE_THRESHOLD = 100
+    TIME_THRESHOLD = 1
+    count_num = [0,0,0,0,0]
     dist_lst = []
-
+    flag = False
+    first_point_time = 0
     while 1:
         temp = ultra.distance()
-        
-        
-        print(park_switch)
+        # print(temp)
+        print(count_num)
+        if count_num[0] < 3:
+            if temp < ULTRA_DISTANCE_THRESHOLD:
+                count_num[0] += 1
+            
+            if count_num[0] == 3:
+                first_point_time = time.time()
+
+        if count_num[1] < 3 and count_num[0] == 3:
+            if temp > ULTRA_DISTANCE_THRESHOLD:
+                count_num[1] += 1
+        if count_num[2] < 3 and count_num[1] == 3:
+            if temp <= ULTRA_DISTANCE_THRESHOLD:
+                count_num[2] += 1
+
+        if count_num[2] > 0:
+            second_point_time = time.time()
+            diff_time = second_point_time - first_point_time
+            print(diff_time)
+            # print(first_point_time)
+            # print(second_point_time)
+            if diff_time < 2.5: # 짧은 구역 탐지 --> 주차장 지역으로 이동후 평행주차 실행
+                print('짧 구역 탐지')
+                run_motor.stop()
+                run_motor.run_target(150,run_motor.angle()+550)
+                steering_motor.run_target(80, -100)
+                run_motor.run_target(150,run_motor.angle()+400)
+                steering_motor.run_target(80, 0)
+                run_motor.run_target(150,run_motor.angle()-600)
+                steering_motor.run_target(80, -100)
+                run_motor.run_target(150,run_motor.angle()-300)
+                steering_motor.run_target(80, 0)
+                run_motor.run_target(150,run_motor.angle()+100)
+                steering_motor.run_target(80, -100)
+                run_motor.run_target(150,run_motor.angle()-100)
+                wait(100)
+                # 빠지는거
+                run_motor.run_target(150,run_motor.angle()+300)
+                steering_motor.run_target(80, 100)
+                run_motor.run_target(150,run_motor.angle()+400)
+                return
+
+        if first_point_time > 2.5:
+            
+            diff_time1 = calcul_diff_time(first_point_time)
+            print(diff_time1)
+            if diff_time1 > 3: # 주차장 지역 --> 평행주차 실행
+                print('주차장 탐지')
+                run_motor.stop()
+                # run_motor.run_target(150,run_motor.angle()+600)
+                steering_motor.run_target(80, -100)
+                run_motor.run_target(150,run_motor.angle()+400)
+                steering_motor.run_target(80, 0)
+                run_motor.run_target(150,run_motor.angle()-700)
+                steering_motor.run_target(80, -100)
+                run_motor.run_target(150,run_motor.angle()-300)
+                steering_motor.run_target(80, 0)
+                run_motor.run_target(150,run_motor.angle()+100)
+                steering_motor.run_target(80, -100)
+                run_motor.run_target(150,run_motor.angle()-100)
+                return
         wait(100)
 
+def calcul_diff_time(first_start_time):
+    temp = time.time() - first_start_time
+    return temp
 
 ####################
     
 ########main########
 
 start()
-while 1:
-    wait(100)
-    buttons =  ev3.buttons.pressed()
-    if Button.CENTER in buttons:
-        break
-start_time = time.time() # 시간 측정 시작작
-run_motor.run(150)
-
-th = 50
-Gain = 3
-red_count=0
-previous_color = None
-yellow_stopped = False
+# while 1:
+#     wait(100)
+#     buttons =  ev3.buttons.pressed()
+#     if Button.CENTER in buttons:
+#         break
+start_time = time.time() # 첫번째 기둥 측정 시작작
 
 
-while True:
-    try:
-        detected_color = color_detection()
-        
-        if detected_color == "red" and previous_color != "red":
-            red_count += 1
-            if red_count == 4:
-                red_detection_motion() 
-            elif red_count == 5:
-                run_motor.stop()
-                steering_motor.stop()
-            
-        elif detected_color == "yellow":
-            yellow_detection_motion()
 
-        else:
-            reset_yellow_flag()
-        
-        previous_color = detected_color
+run_motor.run(150)  
 
-        if not yellow_stopped:
-            data = lsa.ReadRaw_Calibrated()
-            sensor_value = list(data)
-            line_value = sensor_value[3]
+p_parking()
 
-            error = th - line_value
-            correction = Gain * error
-            correction = max(min(correction, 90), -90)
+run_motor.stop()
 
-            steering_motor.run_target(1500, correction)
 
-    except:
-        pass
+
+
