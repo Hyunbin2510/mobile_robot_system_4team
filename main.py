@@ -89,7 +89,6 @@ def p_parking():
     ULTRA_DISTANCE_THRESHHOLD = 100
     park_switch = [False, False, False,False, False]
     dist_lst = []
-
     while 1:
         temp = ultra.distance()
         
