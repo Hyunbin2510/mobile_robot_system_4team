@@ -8,6 +8,8 @@ from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
 from mindsensorsPYB import LSA
 
+import time
+
 # This program requires LEGO EV3 MicroPython v2.0 or higher.
 # Click "Open user guide" on the EV3 extension tab for more information.
 
@@ -57,6 +59,25 @@ def steering_max(switch):
 
     steering_motor.stop()
 
-if __name__ == '__main__':
-    start()
-    while 
+# calibration후 대기
+start()
+while 1:
+    wait(100)
+    buttons =  ev3.buttons.pressed()
+    if Button.CENTER in buttons:
+        break
+start_time = time.time() # 시간 측정 시작작
+
+# p_parking
+run_motor.run(100)
+ULTRA_DISTANCE_THRESHHOLD = 100
+park_switch = [False, False, False,False, False]
+dist_lst = []
+
+while 1:
+    temp = ultra.distance()
+    
+    
+    print(park_switch)
+    wait(100)
+
