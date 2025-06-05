@@ -42,6 +42,14 @@ def start():
     steering_motor.run_angle(-100,100)
     steering_motor.reset_angle(0)
     
+    while 1:
+        wait(100)
+        buttons =  ev3.buttons.pressed()
+        if Button.CENTER in buttons:
+            break
+    start_time = time.time() # 시간 측정 시작작
+    run_motor.run(150)
+    
 #Color sensor control function
 def color_detection():
     r, g, b = color_sensor.rgb()
@@ -95,13 +103,6 @@ def p_parking():
 ########main########
 
 start()
-while 1:
-    wait(100)
-    buttons =  ev3.buttons.pressed()
-    if Button.CENTER in buttons:
-        break
-start_time = time.time() # 시간 측정 시작작
-run_motor.run(150)
 
 th = 50
 Gain = 3
