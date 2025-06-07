@@ -6,7 +6,9 @@ from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
+from pybricks.iodevices import UARTDevice
 from mindsensorsPYB import LSA
+import time
 
 import time
 
@@ -16,11 +18,12 @@ import time
 
 # Create your objects here.
 ev3 = EV3Brick()
-run_motor = Motor(Port.A)
-steering_motor = Motor(Port.D)
+run_motor = Motor(Port.D)
+steering_motor = Motor(Port.A)
 ultra = UltrasonicSensor(Port.S4)
-color_sensor = ColorSensor(Port.S3)
-lsa = LSA(Port.S1, 0X14)
+color_sensor = ColorSensor(Port.S2)
+ser=UARTDevice(Port.S1,baudrate=115200)
+lsa = LSA(Port.S3, 0X14)
 
 
 
@@ -28,7 +31,6 @@ lsa = LSA(Port.S1, 0X14)
 
 ########Function#########
 
-# Start function
 def start():
     steering_motor.run(100)
     while True:
@@ -48,21 +50,29 @@ def start():
         if Button.CENTER in buttons:
             break
     start_time = time.time() # 시간 측정 시작작
-    run_motor.run(150)
+    run_motor.run(250)
     
 #Color sensor control function
 def color_detection():
     r, g, b = color_sensor.rgb()
-
-    if 50 <= r <= 100 and 0 <= g <= 40 and 0 <= b <= 40:
+    #print(r,g,b)
+    if 25 <= r <= 35 and 0 <= g <= 15 and 0 <= b <= 25:
         return "red"
-    elif 50 <= r <= 100 and 50 <= g <= 100 and 0 <= b <= 40:
+    elif 35 <= r <= 45 and 45 <= g <= 55 and 25 <= b <= 35:
         return "yellow"
     return None
 
+def isRedLight():
+    try:
+        p=ser.read_all().decode().strip()[-8:]
+        return p=='redLight'
+    
+    except:
+        pass
+
 def red_detection_motion():
     # 레드 3번 감지 후 수행할 동작 구현
-    ev3.speaker.say("Red detected 3 times")
+    ev3.speaker.beep()
     # 여기에 추가 모션이나 신호등 감지 알고리즘 넣으면 됩니다
 
 def yellow_detection_motion():
@@ -76,7 +86,7 @@ def yellow_detection_motion():
         wait(1000)
         ev3.light.on(Color.GREEN)
         wait(1000)
-        run_motor.run(150)
+        run_motor.run(250)
         yellow_stopped = True
 
 def reset_yellow_flag():
@@ -98,13 +108,12 @@ def p_parking():
 
 
 ####################
-    
 ########main########
 
 start()
 
-th = 50
-Gain = 3
+th = 30
+Gain = 5
 red_count=0
 previous_color = None
 yellow_stopped = False
@@ -112,34 +121,39 @@ yellow_stopped = False
 
 while True:
     try:
-        detected_color = color_detection()
-        
+        detected_color = color_detection()      
         if detected_color == "red" and previous_color != "red":
+            ev3.speaker.beep()
             red_count += 1
+            print(red_count)
             if red_count == 4:
-                red_detection_motion() 
+                pass
             elif red_count == 5:
                 run_motor.stop()
                 steering_motor.stop()
+                break
             
         elif detected_color == "yellow":
             yellow_detection_motion()
 
-        else:
-            reset_yellow_flag()
+        # else:
+        #     reset_yellow_flag()
         
         previous_color = detected_color
 
-        if not yellow_stopped:
-            data = lsa.ReadRaw_Calibrated()
-            sensor_value = list(data)
-            line_value = sensor_value[3]
+        # if not yellow_stopped:
+        data = lsa.ReadRaw_Calibrated()
+        sensor_value = list(data)
+        line_value1 = (sensor_value[6])
+        line_value2 = (sensor_value[7])
 
-            error = th - line_value
-            correction = Gain * error
-            correction = max(min(correction, 90), -90)
+        error1 = th - line_value1
+        error2 = th - line_value2
+        correction1 = Gain * error1
+        correction2 = Gain * error2
+        correction = max(min(max(correction1,correction2), 90), -90)
 
-            steering_motor.run_target(1500, correction)
+        steering_motor.run_target(1500, correction)
 
     except:
         pass
