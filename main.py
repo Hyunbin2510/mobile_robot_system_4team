@@ -181,9 +181,44 @@ yellow_stopped = False
 
 run_motor.run(150)  
 
-p_parking()
+while True:
+    try:
+        detected_color = color_detection()      
+        if detected_color == "red" and previous_color != "red":
+            ev3.speaker.beep()
+            red_count += 1
+            print(red_count)
+            if red_count == 4:#아마 4번이 평행주차였던걸로 기억
+                p_parking()
+            elif red_count == 5:
+                run_motor.stop()
+                steering_motor.stop()
+                break
+            
+        elif detected_color == "yellow":
+            yellow_detection_motion()
 
-run_motor.stop()
+        # else:
+        #     reset_yellow_flag()
+        
+        previous_color = detected_color
+
+        # if not yellow_stopped:
+        data = lsa.ReadRaw_Calibrated()
+        sensor_value = list(data)
+        line_value1 = (sensor_value[6])
+        line_value2 = (sensor_value[7])
+
+        error1 = th - line_value1
+        error2 = th - line_value2
+        correction1 = Gain * error1
+        correction2 = Gain * error2
+        correction = max(min(max(correction1,correction2), 90), -90)
+
+        steering_motor.run_target(1500, correction)
+
+    except:
+        pass
 
 
 
