@@ -90,77 +90,101 @@ def reset_yellow_flag():
 
 # p_parking
 def p_parking():
-    ULTRA_DISTANCE_THRESHOLD = 100
-    TIME_THRESHOLD = 1
-    count_num = [0,0,0,0,0]
-    dist_lst = []
-    flag = False
-    first_point_time = 0
-    while 1:
-        temp = ultra.distance()
-        # print(temp)
-        print(count_num)
-        if count_num[0] < 3:
-            if temp < ULTRA_DISTANCE_THRESHOLD:
-                count_num[0] += 1
-            
-            if count_num[0] == 3:
-                first_point_time = time.time()
+    temp = ultra.distance()
+    # print(temp)
+    print(count_num)
+    if count_num[0] < 3:
+        if temp < ULTRA_DISTANCE_THRESHOLD:
+            count_num[0] += 1
+        
+        if count_num[0] == 3:
+            first_point_time = time.time()
 
-        if count_num[1] < 3 and count_num[0] == 3:
-            if temp > ULTRA_DISTANCE_THRESHOLD:
-                count_num[1] += 1
-        if count_num[2] < 3 and count_num[1] == 3:
-            if temp <= ULTRA_DISTANCE_THRESHOLD:
-                count_num[2] += 1
+    if count_num[1] < 3 and count_num[0] == 3:
+        if temp > ULTRA_DISTANCE_THRESHOLD:
+            count_num[1] += 1
+    if count_num[2] < 3 and count_num[1] == 3:
+        if temp <= ULTRA_DISTANCE_THRESHOLD:
+            count_num[2] += 1
 
-        if count_num[2] > 0:
-            second_point_time = time.time()
-            diff_time = second_point_time - first_point_time
-            print(diff_time)
-            # print(first_point_time)
-            # print(second_point_time)
-            if diff_time < 2.5: # 짧은 구역 탐지 --> 주차장 지역으로 이동후 평행주차 실행
-                print('짧 구역 탐지')
-                run_motor.stop()
-                run_motor.run_target(150,run_motor.angle()+550)
-                steering_motor.run_target(80, -100)
-                run_motor.run_target(150,run_motor.angle()+400)
-                steering_motor.run_target(80, 0)
-                run_motor.run_target(150,run_motor.angle()-600)
-                steering_motor.run_target(80, -100)
-                run_motor.run_target(150,run_motor.angle()-300)
-                steering_motor.run_target(80, 0)
-                run_motor.run_target(150,run_motor.angle()+100)
-                steering_motor.run_target(80, -100)
-                run_motor.run_target(150,run_motor.angle()-100)
-                wait(100)
-                # 빠지는거
-                run_motor.run_target(150,run_motor.angle()+300)
-                steering_motor.run_target(80, 100)
-                run_motor.run_target(150,run_motor.angle()+400)
-                return
+    if count_num[2] > 0:
+        second_point_time = time.time()
+        diff_time = second_point_time - first_point_time
+        print(diff_time)
+        # print(first_point_time)
+        # print(second_point_time)
+        if diff_time < 2.5: # 짧은 구역 탐지 --> 주차장 지역으로 이동후 평행주차 실행
+            print('짧 구역 탐지')
+            run_motor.stop()
+            run_motor.run_target(150,run_motor.angle()+550)
+            steering_motor.run_target(80, -100)
+            run_motor.run_target(150,run_motor.angle()+400)
+            steering_motor.run_target(80, 0)
+            run_motor.run_target(150,run_motor.angle()-600)
+            steering_motor.run_target(80, -100)
+            run_motor.run_target(150,run_motor.angle()-300)
+            steering_motor.run_target(80, 0)
+            run_motor.run_target(150,run_motor.angle()+100)
+            steering_motor.run_target(80, -100)
+            run_motor.run_target(150,run_motor.angle()-100)
+            wait(100)
+            # 빠지는거
+            run_motor.run_target(150, run_motor.angle() + 100)  
+            steering_motor.run_target(80, 100)                  
+            run_motor.run_target(150, run_motor.angle() - 100)  
+            steering_motor.run_target(80, 0)                    
 
-        if first_point_time > 2.5:
-            
-            diff_time1 = calcul_diff_time(first_point_time)
-            print(diff_time1)
-            if diff_time1 > 3: # 주차장 지역 --> 평행주차 실행
-                print('주차장 탐지')
-                run_motor.stop()
-                # run_motor.run_target(150,run_motor.angle()+600)
-                steering_motor.run_target(80, -100)
-                run_motor.run_target(150,run_motor.angle()+400)
-                steering_motor.run_target(80, 0)
-                run_motor.run_target(150,run_motor.angle()-700)
-                steering_motor.run_target(80, -100)
-                run_motor.run_target(150,run_motor.angle()-300)
-                steering_motor.run_target(80, 0)
-                run_motor.run_target(150,run_motor.angle()+100)
-                steering_motor.run_target(80, -100)
-                run_motor.run_target(150,run_motor.angle()-100)
-                return
-        wait(100)
+            # 7~8단계 역방향
+            run_motor.run_target(150, run_motor.angle() + 300)  
+            steering_motor.run_target(80, 100)                  
+            run_motor.run_target(150, run_motor.angle() + 600)  
+            steering_motor.run_target(80, 0)                    
+
+            # 3~4단계 역방향
+            run_motor.run_target(150, run_motor.angle() - 400)  
+            steering_motor.run_target(80, 100)                  
+            run_motor.run_target(150, run_motor.angle() - 550)  
+            steering_motor.run_target(80, 0)          
+            return
+
+    if first_point_time > 2.5:
+        
+        diff_time1 = calcul_diff_time(first_point_time)
+        print(diff_time1)
+        if diff_time1 > 3: # 주차장 지역 --> 평행주차 실행
+            print('주차장 탐지')
+            run_motor.stop()
+            run_motor.run_target(150,run_motor.angle()+550)
+            steering_motor.run_target(80, -100)
+            run_motor.run_target(150,run_motor.angle()+400)
+            steering_motor.run_target(80, 0)
+            run_motor.run_target(150,run_motor.angle()-600)
+            steering_motor.run_target(80, -100)
+            run_motor.run_target(150,run_motor.angle()-300)
+            steering_motor.run_target(80, 0)
+            run_motor.run_target(150,run_motor.angle()+100)
+            steering_motor.run_target(80, -100)
+            run_motor.run_target(150,run_motor.angle()-100)
+            wait(100)
+            # 빠지는거
+            run_motor.run_target(150, run_motor.angle() + 100)  
+            steering_motor.run_target(80, 100)                  
+            run_motor.run_target(150, run_motor.angle() - 100)  
+            steering_motor.run_target(80, 0)                    
+
+            # 7~8단계 역방향
+            run_motor.run_target(150, run_motor.angle() + 300)  
+            steering_motor.run_target(80, 100)                  
+            run_motor.run_target(150, run_motor.angle() + 600)  
+            steering_motor.run_target(80, 0)                    
+
+            # 3~4단계 역방향
+            run_motor.run_target(150, run_motor.angle() - 400)  
+            steering_motor.run_target(80, 100)                  
+            run_motor.run_target(150, run_motor.angle() - 550)  
+            steering_motor.run_target(80, 0)
+            return
+    wait(50)
 
 def calcul_diff_time(first_start_time):
     temp = time.time() - first_start_time
@@ -176,20 +200,25 @@ Gain = 5
 red_count=0
 previous_color = None
 yellow_stopped = False
-
-
+yellow_flag = False
+ULTRA_DISTANCE_THRESHOLD = 100
+count_num = [0,0,0,0,0]
+first_point_time = 0
 
 run_motor.run(150)  
 
 while True:
     try:
+        if yellow_flag: # 노란색 지난후 주차장 탐지
+            p_parking()
+
         detected_color = color_detection()      
         if detected_color == "red" and previous_color != "red":
             ev3.speaker.beep()
             red_count += 1
             print(red_count)
-            if red_count == 4:#아마 4번이 평행주차였던걸로 기억
-                p_parking()
+            if red_count == 4:
+                pass
             elif red_count == 5:
                 run_motor.stop()
                 steering_motor.stop()
@@ -197,6 +226,7 @@ while True:
             
         elif detected_color == "yellow":
             yellow_detection_motion()
+            yellow_flag = True
 
         # else:
         #     reset_yellow_flag()
