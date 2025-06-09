@@ -20,11 +20,11 @@ import time
 
 # Create your objects here.
 ev3 = EV3Brick()
-run_motor = Motor(Port.A)
-steering_motor = Motor(Port.D)
+run_motor = Motor(Port.D)
+steering_motor = Motor(Port.A)
 ultra = UltrasonicSensor(Port.S4)
-color_sensor = ColorSensor(Port.S3)
-lsa = LSA(Port.S1, 0X14)
+color_sensor = ColorSensor(Port.S2)
+lsa = LSA(Port.S3, 0X14)
 
 
 
@@ -57,10 +57,11 @@ def start():
 #Color sensor control function
 def color_detection():
     r, g, b = color_sensor.rgb()
+    # print(r,g,b)
 
-    if 50 <= r <= 100 and 0 <= g <= 40 and 0 <= b <= 40:
+    if 25 <= r <= 35 and 0 <= g <= 15 and 0 <= b <= 30:
         return "red"
-    elif 50 <= r <= 100 and 50 <= g <= 100 and 0 <= b <= 40:
+    elif 35 <= r <= 45 and 45 <= g <=55 and 25 <= b <= 35:
         return "yellow"
     return None
 
@@ -90,20 +91,24 @@ def reset_yellow_flag():
 
 # p_parking
 def p_parking():
+    global ULTRA_DISTANCE_THRESHOLD
+    global count_num 
+    global first_point_time
+    global P_parking_flag
     temp = ultra.distance()
     # print(temp)
     print(count_num)
-    if count_num[0] < 3:
+    if count_num[0] < 2:
         if temp < ULTRA_DISTANCE_THRESHOLD:
             count_num[0] += 1
         
-        if count_num[0] == 3:
+        if count_num[0] == 2:
             first_point_time = time.time()
 
-    if count_num[1] < 3 and count_num[0] == 3:
+    if count_num[1] < 2 and count_num[0] == 2:
         if temp > ULTRA_DISTANCE_THRESHOLD:
             count_num[1] += 1
-    if count_num[2] < 3 and count_num[1] == 3:
+    if count_num[2] < 2 and count_num[1] == 2:
         if temp <= ULTRA_DISTANCE_THRESHOLD:
             count_num[2] += 1
 
@@ -116,35 +121,29 @@ def p_parking():
         if diff_time < 2.5: # 짧은 구역 탐지 --> 주차장 지역으로 이동후 평행주차 실행
             print('짧 구역 탐지')
             run_motor.stop()
-            run_motor.run_target(150,run_motor.angle()+550)
+            run_motor.run_target(150,run_motor.angle()+750)
             steering_motor.run_target(80, -100)
-            run_motor.run_target(150,run_motor.angle()+400)
+            run_motor.run_target(150,run_motor.angle()+200)
             steering_motor.run_target(80, 0)
-            run_motor.run_target(150,run_motor.angle()-600)
+            run_motor.run_target(150,run_motor.angle()-300)
+            steering_motor.run_target(80, -100)
+            run_motor.run_target(150,run_motor.angle()+200)
+            steering_motor.run_target(80, 0)
+            run_motor.run_target(150,run_motor.angle()-300)
+
             steering_motor.run_target(80, -100)
             run_motor.run_target(150,run_motor.angle()-300)
             steering_motor.run_target(80, 0)
             run_motor.run_target(150,run_motor.angle()+100)
             steering_motor.run_target(80, -100)
             run_motor.run_target(150,run_motor.angle()-100)
-            wait(100)
+            wait(500)
             # 빠지는거
             run_motor.run_target(150, run_motor.angle() + 100)  
             steering_motor.run_target(80, 100)                  
             run_motor.run_target(150, run_motor.angle() - 100)  
             steering_motor.run_target(80, 0)                    
-
-            # 7~8단계 역방향
-            run_motor.run_target(150, run_motor.angle() + 300)  
-            steering_motor.run_target(80, 100)                  
-            run_motor.run_target(150, run_motor.angle() + 600)  
-            steering_motor.run_target(80, 0)                    
-
-            # 3~4단계 역방향
-            run_motor.run_target(150, run_motor.angle() - 400)  
-            steering_motor.run_target(80, 100)                  
-            run_motor.run_target(150, run_motor.angle() - 550)  
-            steering_motor.run_target(80, 0)          
+            P_parking_flag = True
             return
 
     if first_point_time > 2.5:
@@ -183,8 +182,8 @@ def p_parking():
             steering_motor.run_target(80, 100)                  
             run_motor.run_target(150, run_motor.angle() - 550)  
             steering_motor.run_target(80, 0)
+            P_parking_flag = True
             return
-    wait(50)
 
 def calcul_diff_time(first_start_time):
     temp = time.time() - first_start_time
@@ -204,15 +203,17 @@ yellow_flag = False
 ULTRA_DISTANCE_THRESHOLD = 100
 count_num = [0,0,0,0,0]
 first_point_time = 0
+P_parking_flag = False
 
-run_motor.run(150)  
 
 while True:
     try:
-        if yellow_flag: # 노란색 지난후 주차장 탐지
+        if yellow_flag and not P_parking_flag: # 노란색 지난후 주차장 탐지
             p_parking()
 
-        detected_color = color_detection()      
+        detected_color = color_detection()   
+        # print(detected_color)
+        # print(red_count)   
         if detected_color == "red" and previous_color != "red":
             ev3.speaker.beep()
             red_count += 1
@@ -224,18 +225,18 @@ while True:
                 steering_motor.stop()
                 break
             
-        elif detected_color == "yellow":
+        elif detected_color == "yellow" and not yellow_flag:
             yellow_detection_motion()
             yellow_flag = True
-
-        # else:
-        #     reset_yellow_flag()
         
         previous_color = detected_color
 
-        # if not yellow_stopped:
+        # if yellow_flag:
+        #     Gain = 2
+
         data = lsa.ReadRaw_Calibrated()
         sensor_value = list(data)
+
         line_value1 = (sensor_value[6])
         line_value2 = (sensor_value[7])
 
