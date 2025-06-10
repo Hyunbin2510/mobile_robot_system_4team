@@ -109,11 +109,11 @@ def p_parking():
     if count_num[1] < 1 and count_num[0] == 2:
         if temp > ULTRA_DISTANCE_THRESHOLD:
             count_num[1] += 1
-    if count_num[2] < 2 and count_num[1] == 1:
+    if count_num[2] < 1 and count_num[1] == 1:
         if temp < ULTRA_DISTANCE_THRESHOLD:
             count_num[2] += 1
 
-    if count_num[2] == 2:
+    if count_num[2] == 1:
         second_point_time = time.time()
         diff_time = second_point_time - first_point_time
         print(diff_time)
@@ -137,15 +137,13 @@ def p_parking():
             steering_motor.run_target(200, -100)
             run_motor.run_target(150,run_motor.angle()+400)
 
-            steering_motor.run_target(200, 100)
-            run_motor.run_target(150,run_motor.angle()-200)
-
             steering_motor.run_target(200, 0)
-            run_motor.run_target(150,run_motor.angle()+200)
+            run_motor.run_target(150,run_motor.angle()+100)
+
 
 
             steering_motor.run_target(200, 100)
-            run_motor.run_target(150,run_motor.angle()+700)
+            run_motor.run_target(150,run_motor.angle()+600)
 
              
             P_parking_flag = True  
@@ -159,36 +157,32 @@ def p_parking():
         if diff_time1 > 3: # 주차장 지역 --> 평행주차 실행
             print('주차장 탐지')
             run_motor.stop()
-            run_motor.run_target(150,run_motor.angle()+600)
-            steering_motor.run_target(80, -100)
+            steering_motor.run_target(80, -10)
             run_motor.run_target(150,run_motor.angle()+400)
-            steering_motor.run_target(80, 0)
-            run_motor.run_target(150,run_motor.angle()-600)
+            steering_motor.run_target(80, 100)
+            run_motor.run_target(150,run_motor.angle()-450)
             steering_motor.run_target(80, -100)
-            run_motor.run_target(150,run_motor.angle()-300)
+            run_motor.run_target(150,run_motor.angle()-400)
             steering_motor.run_target(80, 0)
             run_motor.run_target(150,run_motor.angle()+100)
             steering_motor.run_target(80, -100)
             run_motor.run_target(150,run_motor.angle()-100)
-            wait(100)
-            # 빠지는거
-            run_motor.run_target(150, run_motor.angle() + 100)  
-            steering_motor.run_target(80, 100)                  
-            run_motor.run_target(150, run_motor.angle() - 100)  
-            steering_motor.run_target(80, 0)                    
+            wait(500)
+            # 나오기
+            steering_motor.run_target(200, -100)
+            run_motor.run_target(150,run_motor.angle()+400)
 
-            # 7~8단계 역방향
-            run_motor.run_target(150, run_motor.angle() + 300)  
-            steering_motor.run_target(80, 100)                  
-            run_motor.run_target(150, run_motor.angle() + 600)  
-            steering_motor.run_target(80, 0)                    
+            steering_motor.run_target(200, 0)
+            run_motor.run_target(150,run_motor.angle()+100)
 
-            # 3~4단계 역방향
-            run_motor.run_target(150, run_motor.angle() - 400)  
-            steering_motor.run_target(80, 100)                  
-            run_motor.run_target(150, run_motor.angle() - 550)  
-            steering_motor.run_target(80, 0)
-            P_parking_flag = True
+
+
+            steering_motor.run_target(200, 100)
+            run_motor.run_target(150,run_motor.angle()+600)
+
+             
+            P_parking_flag = True  
+            run_motor.run(250)
             return
 
 def calcul_diff_time(first_start_time):
