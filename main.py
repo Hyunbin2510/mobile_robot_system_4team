@@ -7,7 +7,7 @@ from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
 from mindsensorsPYB import LSA
-
+from pybricks.iodevices import UARTDevice
 import time
 
 '''
@@ -25,7 +25,7 @@ steering_motor = Motor(Port.A)
 ultra = UltrasonicSensor(Port.S4)
 color_sensor = ColorSensor(Port.S2)
 lsa = LSA(Port.S3, 0X14)
-
+ser=UARTDevice(Port.S2,baudrate=115200)
 
 
 # Write your program here.
@@ -218,8 +218,23 @@ while True:
             ev3.speaker.beep()
             red_count += 1
             print(red_count)
-            if red_count == 4:
-                pass
+
+            if red_count==3:
+                run_motor.run(200)
+
+            elif red_count == 4:
+                run_motor.stop()
+
+                while True:
+                    p=ser.read_all().decode().strip()[-2:]
+                    wait(500)
+                    print(p)
+                    if p=='00':
+                        ev3.speaker.beep()
+                        break
+            
+                run_motor.run(250)
+                            
             elif red_count == 5:
                 run_motor.stop()
                 steering_motor.stop()
